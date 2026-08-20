@@ -25,10 +25,11 @@ try {
   Invoke-CheckedNative -Name 'app-js-syntax' -Program $nodePath -Arguments @('--check', 'web/app.js')
   Invoke-CheckedNative -Name 'task-order-js-syntax' -Program $nodePath -Arguments @('--check', 'web/task-order.js')
   Invoke-CheckedNative -Name 'server-js-syntax' -Program $nodePath -Arguments @('--check', 'src-node/server.js')
+  Invoke-CheckedNative -Name 'auth-state-js-syntax' -Program $nodePath -Arguments @('--check', 'src-node/auth-state.js')
   $powerShellFiles = @(
     'scripts/install-windows.ps1', 'scripts/configure-startup-task.ps1',
     'scripts/configure-windows-firewall.ps1', 'scripts/start-dashboard-detached.ps1',
-    'scripts/validate-public-package.ps1'
+    'scripts/validate-public-package.ps1', 'scripts/reset-paired-devices.ps1'
   )
   foreach ($powerShellFile in $powerShellFiles) {
     $tokens = $null
@@ -55,6 +56,7 @@ try {
   if ($bashPath) {
     Invoke-CheckedNative -Name 'mac-install-shell-syntax' -Program $bashPath -Arguments @('-n', 'scripts/install-macos.sh')
     Invoke-CheckedNative -Name 'mac-startup-shell-syntax' -Program $bashPath -Arguments @('-n', 'scripts/configure-startup-macos.sh')
+    Invoke-CheckedNative -Name 'mac-reset-pairing-shell-syntax' -Program $bashPath -Arguments @('-n', 'scripts/reset-paired-devices.sh')
   } else {
     $checks.Add([pscustomobject]@{ Check = 'mac-shell-syntax'; ExitCode = 'not-available-on-host' })
   }
@@ -67,11 +69,11 @@ try {
   $publicFiles = @(
     '.gitignore', 'LICENSE', 'README.md', 'README.zh-CN.md', 'THIRD_PARTY_NOTICES.md', 'config.example.json', 'package.json', 'package-lock.json',
     'web/index.html', 'web/app.js', 'web/task-order.js', 'web/styles.css', 'src-node/server.js', 'src-node/snapshot-service.js',
-    'src-node/app-server-client.js', 'src-node/rollout-observer.js', 'src-node/runtime-info.js',
+    'src-node/app-server-client.js', 'src-node/rollout-observer.js', 'src-node/runtime-info.js', 'src-node/auth-state.js',
     'src-node/remote-rollout-observer.js', 'scripts/install-windows.ps1',
     'scripts/configure-startup-task.ps1', 'scripts/configure-windows-firewall.ps1', 'scripts/start-dashboard-detached.ps1',
     'scripts/install-macos.sh', 'scripts/configure-startup-macos.sh', 'scripts/capture-readme-screenshots.mjs',
-    'scripts/validate-public-package.ps1',
+    'scripts/validate-public-package.ps1', 'scripts/reset-paired-devices.ps1', 'scripts/reset-paired-devices.sh',
     'skills/codex-phone-dashboard/SKILL.md', 'skills/codex-phone-dashboard/agents/openai.yaml',
     'skills/codex-phone-dashboard/references/troubleshooting.md', 'tests-node/dashboard.test.js',
     'web/assets/progress-mascot.gif',

@@ -12,6 +12,7 @@ Operate the open-source dashboard from `lucasgogogo/codex-phone-dashboard`. Keep
 - Bind only to loopback or a private LAN. Never create public hosting, port forwarding, reverse proxies, or tunnels.
 - Never expose prompts, replies, reasoning, tool arguments, working directories, account IDs, raw rollout files, or internal task/session IDs.
 - Keep the six-digit pairing gate enabled.
+- Preserve the persistent paired-device secret across normal restarts and updates. Rotate it only when the user explicitly asks to revoke paired devices.
 - Default to the current computer only. Configure an SSH remote only when the user explicitly requests it and already has key-based SSH working.
 - Ask before changing firewall rules, login-startup configuration, SSH settings, or Git state.
 - Report Windows and macOS verification separately. Do not claim a platform was tested when it was only statically checked.
@@ -25,13 +26,14 @@ Operate the open-source dashboard from `lucasgogogo/codex-phone-dashboard`. Keep
 5. Explain the exact system changes and obtain approval before running the OS installer:
    - Windows: `scripts/install-windows.ps1` adds a LocalSubnet-only firewall rule and a current-user logon task.
    - macOS: `scripts/install-macos.sh` adds a current-user LaunchAgent under `~/Library/LaunchAgents`.
-6. Read the runtime status, give the user the private LAN URL and short-lived pairing code, then verify the HTTP page locally.
+6. Read the runtime status, give the user the private LAN URL and short-lived pairing code, and explicitly say that the code comes from the computer-side AI. If it was not shown, the user can ask the AI for it. Then verify the HTTP page locally.
 7. Ask the user to open the URL on a phone connected to the same trusted Wi-Fi and enter the code.
 
 ## Operations
 
 - Windows status/start/stop/restart/remove: `scripts/configure-startup-task.ps1 -Action <Status|Start|Stop|Restart|Remove>`.
 - macOS status/start/stop/restart/remove: `scripts/configure-startup-macos.sh <status|start|stop|restart|remove>`.
+- Revoke every paired phone only on explicit request and only for the normal background installation: Windows `scripts/reset-paired-devices.ps1`; macOS `sh scripts/reset-paired-devices.sh`. Foreground `npm start` is diagnostic-only and has no automated revocation workflow.
 - Foreground diagnostic mode on either OS: `npm start`.
 - Optional remote host: copy `config.example.json` to ignored `config.local.json`, set `remoteSshHost`, and restart. `CODEX_PHONE_REMOTE_` environment variables are advanced overrides.
 

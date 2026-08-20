@@ -7,6 +7,7 @@ import { parseQuota, parseThreadPage } from "../src-node/app-server-client.js";
 import { parseRollout } from "../src-node/rollout-observer.js";
 import { parseRemoteActivity } from "../src-node/remote-rollout-observer.js";
 import { createRuntimeInfo, writeRuntimeInfo } from "../src-node/runtime-info.js";
+import { createSessionCookie, isSessionAuthenticated, loadOrCreateSessionSecret, rotateSessionSecret, SESSION_MAX_AGE_SECONDS } from "../src-node/auth-state.js";
 import { buildCompanyTasks, buildTasks, SnapshotService } from "../src-node/snapshot-service.js";
 import { sortTasksForDisplay } from "../web/task-order.js";
 
@@ -162,6 +163,9 @@ test("dashboard UI includes bilingual quota states, seven-task expansion, hostna
   assert.match(script, /接下来平均每日可用/);
   assert.match(script, /Average daily allowance/);
   assert.match(script, /codex-phone-language/);
+  assert.match(html, /输入电脑端 AI 告诉你的 6 位配对码/);
+  assert.match(script, /No code\? Ask your AI/);
+  assert.doesNotMatch(`${html}\n${script}`, /12 小时|12 hours/);
   assert.match(html, /id="language-toggle"/);
   assert.match(script, /hostLabels/);
   assert.match(script, /hasPreviousSnapshot/);
@@ -219,4 +223,45 @@ test("runtime status persists pairing details without task data", async () => {
   assert.equal(JSON.stringify(stored).includes("title"), false);
   assert.equal(JSON.stringify(stored).includes("state"), false);
   assert.equal(JSON.stringify(stored).includes("company"), false);
+});
+
+test("paired browser session survives dashboard restarts and expires only after explicit rotation", async () => {
+  const folder = await mkdtemp(join(tmpdir(), "codex-phone-auth-"));
+  const target = join(folder, "auth-state.json");
+  const firstProcessSecret = await loadOrCreateSessionSecret(target);
+  const cookie = createSessionCookie(firstProcessSecret);
+  const restartedProcessSecret = await loadOrCreateSessionSecret(target);
+  assert.equal(restartedProcessSecret, firstProcessSecret);
+  assert.equal(isSessionAuthenticated(cookie, restartedProcessSecret), true);
+  assert.match(cookie, /HttpOnly/);
+  assert.match(cookie, /SameSite=Strict/);
+  assert.match(cookie, new RegExp(`Max-Age=${SESSION_MAX_AGE_SECONDS}`));
+
+  const rotatedSecret = await rotateSessionSecret(target);
+  assert.notEqual(rotatedSecret, firstProcessSecret);
+  assert.equal(isSessionAuthenticated(cookie, rotatedSecret), false);
+  assert.equal(isSessionAuthenticated("", rotatedSecret), false);
+});
+
+test("revocation scripts share the canonical auth path and fail closed outside installed background mode", async () => {
+  const [authState, windowsStartup, windowsReset, macReset, detachedStart] = await Promise.all([
+    readFile(new URL("../src-node/auth-state.js", import.meta.url), "utf8"),
+    readFile(new URL("../scripts/configure-startup-task.ps1", import.meta.url), "utf8"),
+    readFile(new URL("../scripts/reset-paired-devices.ps1", import.meta.url), "utf8"),
+    readFile(new URL("../scripts/reset-paired-devices.sh", import.meta.url), "utf8"),
+    readFile(new URL("../scripts/start-dashboard-detached.ps1", import.meta.url), "utf8")
+  ]);
+  assert.doesNotMatch(authState, /CODEX_PHONE_AUTH_STATE_PATH/);
+  assert.match(authState, /CodexPhoneDashboard", "auth-state\.json/);
+  assert.match(windowsReset, /Join-Path \$env:LOCALAPPDATA 'CodexPhoneDashboard'/);
+  assert.match(windowsReset, /Join-Path \$supportRoot 'auth-state\.json'/);
+  assert.match(macReset, /Application Support\/CodexPhoneDashboard/);
+  assert.match(macReset, /auth_state="\$support_dir\/auth-state\.json"/);
+  assert.match(windowsReset, /Reset requires the installed background task/);
+  assert.match(macReset, /Reset requires the installed LaunchAgent/);
+  assert.match(macReset, /shasum -a 256/);
+  assert.match(macReset, /Authorization state did not rotate/);
+  assert.match(windowsStartup, /function Get-DashboardProcesses/);
+  assert.match(windowsStartup, /Unable to stop the exact Codex Phone Dashboard server process/);
+  assert.match(detachedStart, /existingServers\.Count -gt 0/);
 });
