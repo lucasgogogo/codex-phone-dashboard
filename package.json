@@ -1,0 +1,22 @@
+{
+  "name": "codex-phone-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A private LAN dashboard for viewing Codex quota and task activity on an iPhone.",
+  "type": "module",
+  "scripts": {
+    "start": "node src-node/server.js",
+    "test": "node --test tests-node/*.test.js",
+    "screenshots": "node scripts/capture-readme-screenshots.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@openai/codex": "0.148.0"
+  },
+  "devDependencies": {
+    "playwright-core": "1.62.1"
+  }
+}

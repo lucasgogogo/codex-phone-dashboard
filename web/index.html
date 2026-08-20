@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta id="theme-color" name="theme-color" content="#07100d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Codex Phone Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2308100d'/%3E%3Ccircle cx='32' cy='32' r='15' fill='none' stroke='%2368f0ad' stroke-width='7'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <p id="hub-label" class="hub-label">LOCAL HUB · LOCAL ONLY</p>
+      <div class="top-actions">
+        <button id="language-toggle" class="language-toggle" type="button" aria-label="Switch language">EN</button>
+        <div id="connection" class="connection offline"><span></span><b data-i18n="disconnected">未连接</b></div>
+      </div>
+    </header>
+
+    <section id="pairing" class="pair-card">
+      <p class="eyebrow" data-i18n="firstConnection">首次连接</p>
+      <h2 data-i18n="enterPairingCode">输入电脑显示的 6 位配对码</h2>
+      <p data-i18n="pairingHelp">配对成功后，这台手机会保持登录 12 小时。</p>
+      <form id="pair-form">
+        <label for="pin" data-i18n="pairingCode">配对码</label>
+        <input id="pin" name="pin" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required>
+        <button type="submit" data-i18n="connectComputer">连接电脑</button>
+        <p id="pair-error" class="error" role="alert"></p>
+      </form>
+    </section>
+
+    <section id="dashboard" hidden>
+      <section class="quota-hero" aria-labelledby="quota-title">
+        <div class="quota-heading">
+          <div><p class="eyebrow" data-i18n="codexStatus">CODEX 状态</p><h1 id="quota-title" data-i18n="availableQuota">可用额度</h1></div>
+          <span id="quota-stale" class="stale" hidden data-i18n="staleData">旧数据</span>
+        </div>
+        <div id="quota-content" hidden>
+          <p id="quota-value" class="quota-value"><span id="quota-number">--</span><span class="quota-symbol">%</span></p>
+          <div id="bar-area" class="bar-area">
+            <img class="progress-mascot" src="/assets/progress-mascot.gif" alt="" aria-hidden="true">
+            <div class="bar" aria-hidden="true"><span id="quota-fill"></span></div>
+          </div>
+          <div class="quota-meta">
+            <span id="quota-reset"></span>
+            <span id="quota-daily"></span>
+          </div>
+        </div>
+        <p id="quota-empty" class="empty" hidden data-i18n="quotaUnavailable">暂时读不到 Codex 额度。</p>
+      </section>
+
+      <div class="section-head tasks-head">
+        <h2 data-i18n="recentTasks">最近任务</h2>
+        <label class="privacy"><input id="privacy" type="checkbox"><span data-i18n="hideTitles">隐藏标题</span></label>
+      </div>
+      <div id="host-filter" class="host-filter" role="group" aria-label="任务来源筛选">
+        <button type="button" data-host="all" aria-pressed="true" data-i18n="allHosts">全部</button>
+        <button type="button" data-host="personal" aria-pressed="false">本机</button>
+        <button type="button" data-host="company" aria-pressed="false">远端</button>
+      </div>
+      <div id="task-list" class="task-list" aria-live="polite"></div>
+      <p id="task-empty" class="empty" data-i18n="loadingTasks">正在读取任务状态…</p>
+      <button id="more-tasks" class="more" type="button" aria-expanded="false" hidden></button>
+    </section>
+
+    <footer>
+      <div><span id="last-sync" data-i18n="notSynced">尚未同步</span><span data-i18n="wifiReadonly">同一 Wi‑Fi · 只读</span></div>
+      <p class="copyright">© 2026 lucasgogogo</p>
+    </footer>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

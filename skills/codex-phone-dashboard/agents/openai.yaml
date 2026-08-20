@@ -1,0 +1,7 @@
+interface:
+  display_name: "Codex Phone Dashboard"
+  short_description: "Install and run a private Codex phone status screen"
+  brand_color: "#68F0AD"
+  default_prompt: "Use $codex-phone-dashboard to install and verify my private phone dashboard."
+policy:
+  allow_implicit_invocation: true
