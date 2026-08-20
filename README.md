@@ -2,6 +2,8 @@
 
 [中文说明](./README.zh-CN.md) · English
 
+![Codex Phone Dashboard on a desk with green, yellow, and red quota states](./assets/readme/codex-phone-dashboard-promo.png)
+
 Turn a spare phone into a private, read-only Codex status screen. It shows your available quota, reset time, average daily allowance, recent task states, and optional activity from another computer—only while the phone and host computer share the same trusted Wi-Fi.
 
 ## Phone dashboard preview
@@ -21,7 +23,7 @@ The screenshots are generated from the real 390×844 page with synthetic compute
 - Uses Safari or any modern phone browser; no iOS/Android app is required.
 - Makes available quota the main visual, with green (50%+), yellow (15–49.9%), and pale red (below 15%) themes.
 - Shows seven recent tasks, with an expandable remainder list.
-- Moves a newly completed task to the top and flashes it once.
+- Keeps running tasks first; a newly completed task moves directly below them and flashes once.
 - Uses actual computer names in compact filter pills.
 - Supports complete Chinese and English UI.
 - Runs locally with a six-digit pairing code and a 12-hour browser session.

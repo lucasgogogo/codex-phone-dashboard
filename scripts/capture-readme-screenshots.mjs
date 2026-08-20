@@ -33,7 +33,7 @@ const server = createServer(async (request, response) => {
     response.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-store", Connection: "keep-alive" });
     return response.write(": connected\n\n");
   }
-  const routes = { "/": "index.html", "/app.js": "app.js", "/styles.css": "styles.css", "/assets/progress-mascot.gif": "assets/progress-mascot.gif" };
+  const routes = { "/": "index.html", "/app.js": "app.js", "/task-order.js": "task-order.js", "/styles.css": "styles.css", "/assets/progress-mascot.gif": "assets/progress-mascot.gif" };
   const file = routes[url.pathname];
   if (!file) { response.writeHead(404); return response.end(); }
   const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".gif": "image/gif" };

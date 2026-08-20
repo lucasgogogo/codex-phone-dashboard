@@ -1,3 +1,5 @@
+import { sortTasksForDisplay } from "/task-order.js";
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_TASK_LIMIT = 7;
 const COMPLETION_FLASH_MS = 1600;
@@ -210,8 +212,7 @@ function renderTasks() {
   const source = latest.activitySources?.[selectedHost];
   const available = selectedHost === "all" ? latest.activityAvailable : source?.available;
   const filtered = (latest.tasks || []).filter((item) => selectedHost === "all" || item.host === selectedHost);
-  const sorted = filtered.map((item, index) => ({ item, index, promotedAt: completionPromotions.get(taskKey(item)) || 0 }))
-    .sort((left, right) => (right.promotedAt - left.promotedAt) || (left.index - right.index)).map(({ item }) => item);
+  const sorted = sortTasksForDisplay(filtered, (item) => completionPromotions.get(taskKey(item)) || 0);
   const visibleTasks = expanded ? sorted : sorted.slice(0, DEFAULT_TASK_LIMIT);
   const totalCount = latest.taskCounts?.[selectedHost] ?? sorted.length;
   taskList.replaceChildren();

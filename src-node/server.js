@@ -117,7 +117,7 @@ function openStream(request, response) {
 
 async function serveStatic(pathname, response) {
   const routes = {
-    "/": "index.html", "/app.js": "app.js", "/styles.css": "styles.css",
+    "/": "index.html", "/app.js": "app.js", "/task-order.js": "task-order.js", "/styles.css": "styles.css",
     "/assets/progress-mascot.gif": "assets/progress-mascot.gif"
   };
   const file = routes[pathname];
