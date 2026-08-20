@@ -8,6 +8,7 @@ import { parseRollout } from "../src-node/rollout-observer.js";
 import { parseRemoteActivity } from "../src-node/remote-rollout-observer.js";
 import { createRuntimeInfo, writeRuntimeInfo } from "../src-node/runtime-info.js";
 import { buildCompanyTasks, buildTasks, SnapshotService } from "../src-node/snapshot-service.js";
+import { sortTasksForDisplay } from "../web/task-order.js";
 
 test("quota parser exposes only normalized usage fields", () => {
   const quota = parseQuota({
@@ -80,6 +81,31 @@ test("company task reducer uses app status, removes subagents, and limits histor
     { title: "Active", state: "running" }, { title: "Idle", state: "idle" }
   ]);
   assert.equal(result.totalCount, 2);
+});
+
+test("display ordering keeps running tasks ahead of newly completed promotions", () => {
+  const tasks = [
+    { title: "Newest completion", state: "completed" },
+    { title: "Running older", state: "running" },
+    { title: "Failed", state: "failed" },
+    { title: "Running newer", state: "running" },
+    { title: "Older completion", state: "completed" }
+  ];
+  const promotions = new Map([["Newest completion", 200], ["Older completion", 100]]);
+  const result = sortTasksForDisplay(tasks, (item) => promotions.get(item.title));
+  assert.deepEqual(result.map((item) => item.title), [
+    "Running older", "Running newer", "Newest completion", "Older completion", "Failed"
+  ]);
+});
+
+test("display ordering preserves backend order when no completion is promoted", () => {
+  const tasks = [
+    { title: "Running", state: "running" },
+    { title: "Failed", state: "failed" },
+    { title: "Interrupted", state: "interrupted" },
+    { title: "Completed", state: "completed" }
+  ];
+  assert.deepEqual(sortTasksForDisplay(tasks).map((item) => item.title), tasks.map((item) => item.title));
 });
 
 test("remote activity parser keeps only lifecycle metadata", () => {

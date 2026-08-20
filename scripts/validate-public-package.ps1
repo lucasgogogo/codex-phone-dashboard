@@ -23,6 +23,7 @@ try {
   $nodePath = (Get-Command node -ErrorAction Stop).Source
   $npmPath = (Get-Command npm -ErrorAction Stop).Source
   Invoke-CheckedNative -Name 'app-js-syntax' -Program $nodePath -Arguments @('--check', 'web/app.js')
+  Invoke-CheckedNative -Name 'task-order-js-syntax' -Program $nodePath -Arguments @('--check', 'web/task-order.js')
   Invoke-CheckedNative -Name 'server-js-syntax' -Program $nodePath -Arguments @('--check', 'src-node/server.js')
   $powerShellFiles = @(
     'scripts/install-windows.ps1', 'scripts/configure-startup-task.ps1',
@@ -65,7 +66,7 @@ try {
 
   $publicFiles = @(
     '.gitignore', 'LICENSE', 'README.md', 'README.zh-CN.md', 'THIRD_PARTY_NOTICES.md', 'config.example.json', 'package.json', 'package-lock.json',
-    'web/index.html', 'web/app.js', 'web/styles.css', 'src-node/server.js', 'src-node/snapshot-service.js',
+    'web/index.html', 'web/app.js', 'web/task-order.js', 'web/styles.css', 'src-node/server.js', 'src-node/snapshot-service.js',
     'src-node/app-server-client.js', 'src-node/rollout-observer.js', 'src-node/runtime-info.js',
     'src-node/remote-rollout-observer.js', 'scripts/install-windows.ps1',
     'scripts/configure-startup-task.ps1', 'scripts/configure-windows-firewall.ps1', 'scripts/start-dashboard-detached.ps1',
@@ -74,6 +75,7 @@ try {
     'skills/codex-phone-dashboard/SKILL.md', 'skills/codex-phone-dashboard/agents/openai.yaml',
     'skills/codex-phone-dashboard/references/troubleshooting.md', 'tests-node/dashboard.test.js',
     'web/assets/progress-mascot.gif',
+    'assets/readme/codex-phone-dashboard-promo.png',
     'assets/readme/phone/dashboard-en-connected-danger-12.png',
     'assets/readme/phone/dashboard-en-connected-healthy-95.png',
     'assets/readme/phone/dashboard-en-connected-warning-42.png',
