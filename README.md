@@ -26,7 +26,7 @@ The screenshots are generated from the real 390×844 page with synthetic compute
 - Keeps running tasks first; a newly completed task moves directly below them and flashes once.
 - Uses actual computer names in compact filter pills.
 - Supports complete Chinese and English UI.
-- Runs locally with a six-digit pairing code and a 12-hour browser session.
+- Protects the first connection with a six-digit code on shared Wi-Fi, then keeps that phone paired across computer restarts and Dashboard updates.
 - Optionally reads another computer through an existing key-based SSH connection; remote monitoring is off by default.
 
 ## Privacy and safety
@@ -67,6 +67,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1
 
 The installer runs the tests, creates one inbound rule limited to TCP 43117 and `LocalSubnet`, and adds a current-user logon task. It prints the private URL and pairing code when ready.
 
+The Dashboard generates the code locally. The AI installing it can read the code; if it was not shown, ask: “What is my Codex Phone Dashboard pairing code?”
+
 Useful controls:
 
 ```powershell
@@ -76,6 +78,8 @@ Useful controls:
 .\scripts\configure-startup-task.ps1 -Action Remove
 .\scripts\configure-windows-firewall.ps1 -Remove
 ```
+
+After the normal background installation, ask your AI to run `scripts/reset-paired-devices.ps1` to revoke every paired phone. It confirms the exact server process has stopped before rotating local authorization and restarting, without deleting tasks or configuration. `npm start` is diagnostic-only and does not provide automated revocation.
 
 ### 2B. macOS
 
@@ -97,13 +101,17 @@ Useful controls:
 ./scripts/configure-startup-macos.sh remove
 ```
 
+After the normal LaunchAgent installation, ask your AI to run `sh scripts/reset-paired-devices.sh` to revoke every paired phone. `npm start` is diagnostic-only and does not provide automated revocation.
+
 ### 3. Connect the phone
 
 1. Keep the phone and computer on the same trusted Wi-Fi.
-2. Read the private URL and six-digit code from the installer status.
+2. Read the private URL and six-digit code provided by the AI on your computer. If no code was shown, ask: “What is my Codex Phone Dashboard pairing code?”
 3. Open the URL in Safari or another modern browser.
 4. Enter the code within 10 minutes.
 5. Use the `EN / 中` button to change language.
+
+The upgrade to `v1.2.0` requires one final pairing. After that, computer restarts and Dashboard updates do not require the code again unless Safari website data is cleared or paired devices are explicitly revoked.
 
 ## Let an AI install it
 
@@ -125,7 +133,7 @@ Then:
 - Use the repository's matching Windows or macOS installer.
 - Keep it private to the same trusted Wi-Fi. Never use public hosting, port forwarding, reverse proxies, or tunnels.
 - Verify the process, TCP 43117 listener, local HTTP page, runtime status, and pairing code separately.
-- Give me the exact private URL and pairing code, then wait while I test it on my phone.
+- Give me the exact private URL and six-digit pairing code. Tell me that if no code is visible later, I can ask my AI for it, then wait while I test it on my phone.
 - If anything fails, report the proven failure and rollback path. Do not claim success from a scheduler entry alone.
 ```
 
@@ -174,7 +182,7 @@ The Codex app-server request/pagination foundation and rollout lifecycle observa
 This independent project adds and rebuilds the product around a phone browser:
 
 - A responsive iPhone/Android web dashboard instead of a hardware-specific display output.
-- A Node.js local-LAN service for Windows and macOS, with a six-digit pairing gate and 12-hour browser session.
+- A Node.js local-LAN service for Windows and macOS, with a shared-Wi-Fi six-digit gate, restart-persistent pairing, and an all-device revocation mechanism.
 - A quota-first bilingual interface, three quota themes, seven-task expansion, completion promotion/flash, privacy mode, and real hostname filters.
 - Optional read-only monitoring of another computer through an existing key-based SSH connection.
 - Windows Task Scheduler and LocalSubnet firewall setup, plus a macOS current-user LaunchAgent.

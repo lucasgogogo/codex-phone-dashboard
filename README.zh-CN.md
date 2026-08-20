@@ -26,7 +26,7 @@
 - 运行中任务始终置顶；新完成任务移动到所有运行中任务之后并闪一下。
 - 筛选胶囊显示真实电脑名，不写死“公司电脑/个人电脑”。
 - 页面可以完整切换中文和英文。
-- 6 位配对码有效 10 分钟，手机登录状态保持 12 小时。
+- 共享 Wi-Fi 下首次连接使用 6 位配对码；配对成功后，这台手机会跨电脑重启和 Dashboard 更新保持登录。
 - 可以通过已经存在的 SSH 密钥连接读取另一台电脑；默认不开启远端监控。
 
 ## 隐私和安全边界
@@ -67,6 +67,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1
 
 安装器会运行测试、创建一个仅允许 TCP 43117 和 `LocalSubnet` 的入站规则，并建立当前用户登录启动任务。完成后会显示手机要打开的私有地址和 6 位配对码。
 
+配对码由 Dashboard 在电脑本地生成。安装你的 AI 可以读取它；如果安装结果里没有看到，直接问 AI：“我的 Codex Phone Dashboard 配对码是多少？”
+
 常用控制：
 
 ```powershell
@@ -76,6 +78,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1
 .\scripts\configure-startup-task.ps1 -Action Remove
 .\scripts\configure-windows-firewall.ps1 -Remove
 ```
+
+使用正式后台安装后，需要让所有已配对手机失效时，让 AI 运行 `scripts/reset-paired-devices.ps1`。它会确认精确服务进程已经停止，再轮换本机授权并重启服务，不会删除任务或配置。`npm start` 只用于前台诊断，不提供自动撤销流程。
 
 ### 第 2B 步：macOS 安装
 
@@ -97,13 +101,17 @@ chmod +x scripts/install-macos.sh scripts/configure-startup-macos.sh
 ./scripts/configure-startup-macos.sh remove
 ```
 
+使用正式 LaunchAgent 安装后，需要让所有已配对手机失效时，让 AI 运行 `sh scripts/reset-paired-devices.sh`。`npm start` 只用于前台诊断，不提供自动撤销流程。
+
 ### 第 3 步：连接手机
 
 1. 确认手机和电脑连接同一个可信 Wi-Fi。
-2. 从安装结果里找到私有网址和 6 位配对码。
+2. 从电脑端 AI 给出的安装结果里找到私有网址和 6 位配对码；如果没有看到，直接问 AI：“我的 Codex Phone Dashboard 配对码是多少？”
 3. 在手机 Safari 打开这个网址。
 4. 在 10 分钟内输入配对码。
 5. 用右上角的 `EN / 中` 切换页面语言。
+
+升级到 `v1.2.0` 时需要最后配对一次。之后只要不清除 Safari 网站数据、也不主动撤销设备，电脑重启或 Dashboard 更新都不需要重新输入。
 
 ## 让 AI 自动帮你安装
 
@@ -125,7 +133,7 @@ chmod +x scripts/install-macos.sh scripts/configure-startup-macos.sh
 - 按系统使用仓库自带的 Windows 或 macOS 安装脚本。
 - 只允许同一个可信 Wi-Fi 访问，绝不配置公网、端口转发、反向代理或 tunnel。
 - 分别验证 Node 进程、TCP 43117 监听、本机 HTTP 页面、runtime 状态文件和配对码。
-- 最后把手机要打开的私有网址和配对码明确发给我，然后等我用手机测试。
+- 最后把手机要打开的私有网址和 6 位配对码明确发给我；告诉我“如果以后没看到配对码，直接问 AI 要”，然后等我用手机测试。
 - 如果失败，告诉我已经实测确认的失败原因和回滚方法；不能只看到计划任务或 LaunchAgent 就说安装成功。
 ```
 
@@ -174,7 +182,7 @@ Codex app-server 请求与分页基础、rollout 生命周期读取逻辑改编�
 本独立项目围绕手机浏览器新增和重做了以下部分：
 
 - 把硬件专用输出改造成适配 iPhone/Android 的响应式网页状态屏。
-- 新增 Windows/macOS 可运行的 Node.js 局域网服务、6 位配对码和 12 小时浏览器会话。
+- 新增 Windows/macOS 可运行的 Node.js 局域网服务、共享 Wi-Fi 六位码保护、跨重启持久配对与全部设备撤销机制。
 - 新增额度优先的中英文界面、三档额度主题、7 条任务展开、完成置顶闪光、隐私模式和真实设备名筛选。
 - 新增通过既有 SSH 密钥只读监控另一台电脑的可选能力。
 - 新增 Windows Task Scheduler、LocalSubnet 防火墙配置和 macOS 当前用户 LaunchAgent。

@@ -19,6 +19,12 @@ function Get-DashboardTask {
   Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
 }
 
+function Get-DashboardProcesses {
+  @(Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" -ErrorAction SilentlyContinue | Where-Object {
+    $_.CommandLine -and $_.CommandLine.IndexOf($serverPath, [System.StringComparison]::OrdinalIgnoreCase) -ge 0
+  })
+}
+
 function Protect-RuntimeDirectory {
   New-Item -ItemType Directory -Path $runtimeInfoDir -Force | Out-Null
   $userSid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
@@ -43,14 +49,18 @@ function Get-LiveDashboardRuntime {
 }
 
 function Stop-DashboardProcess {
-  $runtime = Get-LiveDashboardRuntime
-  if ($runtime) {
-    Stop-Process -Id ([int]$runtime.processId) -Force
+  $dashboardProcesses = @(Get-DashboardProcesses)
+  foreach ($dashboardProcess in $dashboardProcesses) {
+    Stop-Process -Id ([int]$dashboardProcess.ProcessId) -Force
+  }
+  foreach ($dashboardProcess in $dashboardProcesses) {
     for ($attempt = 0; $attempt -lt 10; $attempt++) {
-      if (-not (Get-Process -Id ([int]$runtime.processId) -ErrorAction SilentlyContinue)) { break }
+      if (-not (Get-Process -Id ([int]$dashboardProcess.ProcessId) -ErrorAction SilentlyContinue)) { break }
       Start-Sleep -Milliseconds 200
     }
   }
+  $remaining = @(Get-DashboardProcesses)
+  if ($remaining.Count -gt 0) { throw 'Unable to stop the exact Codex Phone Dashboard server process.' }
 }
 
 function Show-DashboardStatus {

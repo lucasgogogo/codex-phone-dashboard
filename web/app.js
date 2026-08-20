@@ -6,8 +6,8 @@ const COMPLETION_FLASH_MS = 1600;
 
 const TEXT = {
   "zh-CN": {
-    firstConnection: "首次连接", enterPairingCode: "输入电脑显示的 6 位配对码",
-    pairingHelp: "配对成功后，这台手机会保持登录 12 小时。", pairingCode: "配对码",
+    firstConnection: "首次连接", enterPairingCode: "输入电脑端 AI 告诉你的 6 位配对码",
+    pairingHelp: "没看到配对码？直接问你的 AI。首次配对后，电脑重启或更新不需要重新输入。", pairingCode: "配对码",
     connectComputer: "连接电脑", disconnected: "连接中断", connected: "已连接",
     codexStatus: "CODEX 状态", availableQuota: "可用额度", staleData: "旧数据",
     quotaUnavailable: "暂时读不到 Codex 额度。", recentTasks: "最近任务", hideTitles: "隐藏标题",
@@ -21,8 +21,8 @@ const TEXT = {
     states: { running: "运行中", completed: "已完成", failed: "失败", interrupted: "已中断", idle: "空闲", notLoaded: "未加载", unknown: "未知" }
   },
   en: {
-    firstConnection: "FIRST CONNECTION", enterPairingCode: "Enter the 6-digit code shown on your computer",
-    pairingHelp: "After pairing, this phone stays signed in for 12 hours.", pairingCode: "Pairing code",
+    firstConnection: "FIRST CONNECTION", enterPairingCode: "Enter the 6-digit pairing code provided by the AI on your computer",
+    pairingHelp: "No code? Ask your AI. After the first pairing, computer restarts and updates do not require the code again.", pairingCode: "Pairing code",
     connectComputer: "Connect computer", disconnected: "Disconnected", connected: "Connected",
     codexStatus: "CODEX STATUS", availableQuota: "Available quota", staleData: "Stale",
     quotaUnavailable: "Codex quota is temporarily unavailable.", recentTasks: "Recent tasks", hideTitles: "Hide titles",

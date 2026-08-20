@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { randomBytes, randomInt, timingSafeEqual } from "node:crypto";
+import { randomInt, timingSafeEqual } from "node:crypto";
 import { execFile } from "node:child_process";
 import { hostname, networkInterfaces } from "node:os";
 import { extname, join } from "node:path";
@@ -11,6 +11,7 @@ import { SnapshotService } from "./snapshot-service.js";
 import { AppServerClient } from "./app-server-client.js";
 import { readRemoteRolloutActivity } from "./remote-rollout-observer.js";
 import { createRuntimeInfo, writeRuntimeInfo } from "./runtime-info.js";
+import { createSessionCookie, isSessionAuthenticated, loadOrCreateSessionSecret } from "./auth-state.js";
 
 const PORT = Number(process.env.CODEX_PHONE_PORT || 43117);
 const HOST = process.env.CODEX_PHONE_HOST || "0.0.0.0";
@@ -18,7 +19,7 @@ const WEB_ROOT = fileURLToPath(new URL("../web/", import.meta.url));
 const LOCAL_CONFIG_PATH = fileURLToPath(new URL("../config.local.json", import.meta.url));
 const LOCAL_CONFIG = readLocalConfig();
 const PIN = String(randomInt(100000, 1000000));
-const SESSION = randomBytes(32).toString("base64url");
+const SESSION = await loadOrCreateSessionSecret();
 const PAIR_WINDOW_MS = 10 * 60 * 1000;
 const startedAt = Date.now();
 const attempts = new Map();
@@ -100,7 +101,7 @@ async function pair(request, response, remote) {
   let supplied = "";
   try { supplied = String(JSON.parse(body).pin || ""); } catch {}
   if (!safeEqual(supplied, PIN)) return sendJson(response, 401, { errorCode: "pairingIncorrect" });
-  response.setHeader("Set-Cookie", `codex_phone_session=${SESSION}; HttpOnly; SameSite=Strict; Path=/; Max-Age=43200`);
+  response.setHeader("Set-Cookie", createSessionCookie(SESSION));
   return sendJson(response, 200, { ok: true });
 }
 
@@ -133,9 +134,7 @@ async function serveStatic(pathname, response) {
 }
 
 function isAuthenticated(request) {
-  const cookie = request.headers.cookie || "";
-  const match = cookie.match(/(?:^|;\s*)codex_phone_session=([^;]+)/);
-  return match ? safeEqual(match[1], SESSION) : false;
+  return isSessionAuthenticated(request.headers.cookie, SESSION);
 }
 
 function safeEqual(left, right) {
