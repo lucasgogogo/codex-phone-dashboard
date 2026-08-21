@@ -1,6 +1,7 @@
 import { sortTasksForDisplay } from "/task-order.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
 const DEFAULT_TASK_LIMIT = 7;
 const COMPLETION_FLASH_MS = 1600;
 
@@ -16,7 +17,7 @@ const TEXT = {
     tooManyAttempts: "尝试次数过多，请稍后再试", requestTooLarge: "请求过大", pairingIncorrect: "配对码不正确", hubUnavailable: "无法连接本地 Hub",
     privateTask: "隐私任务", noTasks: "24 小时内暂无可显示的任务。", sourceUnavailable: "任务源暂时不可用。",
     stalePrefix: "旧数据 · ", syncedAt: "同步于 {time}", quotaReset: "{name}额度 · {time} 重置",
-    dailyAvailable: "接下来平均每日可用 {value}%", collapseTasks: "收起任务",
+    dailyAvailable: "接下来平均每日可用 {value}%", resetCountdown: "还有 {value} 小时重置", collapseTasks: "收起任务",
     moreTasks: "另有 {count} 个最近任务，点击展开",
     states: { running: "运行中", completed: "已完成", failed: "失败", interrupted: "已中断", idle: "空闲", notLoaded: "未加载", unknown: "未知" }
   },
@@ -31,7 +32,7 @@ const TEXT = {
     tooManyAttempts: "Too many attempts. Try again shortly.", requestTooLarge: "Request is too large.", pairingIncorrect: "Pairing code is incorrect.", hubUnavailable: "Cannot reach the local hub",
     privateTask: "Private task", noTasks: "No displayable tasks in the last 24 hours.", sourceUnavailable: "Task source is temporarily unavailable.",
     stalePrefix: "Stale · ", syncedAt: "Synced {time}", quotaReset: "{name} quota · resets {time}",
-    dailyAvailable: "Average daily allowance {value}%", collapseTasks: "Collapse tasks",
+    dailyAvailable: "Average daily allowance {value}%", resetCountdown: "{value}h until reset", collapseTasks: "Collapse tasks",
     moreTasks: "{count} more recent tasks · tap to expand",
     states: { running: "Running", completed: "Completed", failed: "Failed", interrupted: "Interrupted", idle: "Idle", notLoaded: "Not loaded", unknown: "Unknown" }
   }
@@ -52,6 +53,9 @@ const quotaStale = $("#quota-stale");
 const quotaNumber = $("#quota-number");
 const quotaFill = $("#quota-fill");
 const barArea = $("#bar-area");
+const resetArrows = $("#reset-arrows");
+const resetRunner = $("#reset-runner");
+const resetCountdown = $("#reset-countdown");
 const quotaReset = $("#quota-reset");
 const quotaDaily = $("#quota-daily");
 const taskList = $("#task-list");
@@ -197,11 +201,24 @@ function renderQuota() {
   if (!item) return applyTheme("healthy");
   const remaining = clamp(100 - Number(item.usedPercent || 0), 0, 100);
   const resetAt = Number(item.resetsAt) * 1000;
-  const daysRemaining = Math.max(1, Math.ceil((resetAt - Number(latest.generatedAt || Date.now())) / DAY_MS));
+  const generatedAt = Number(latest.generatedAt || Date.now());
+  const remainingMs = resetAt - generatedAt;
+  const durationMs = Number(item.windowDurationMins) * 60 * 1000;
+  const runnerAvailable = Number.isFinite(remainingMs) && Number.isFinite(durationMs) && durationMs > 0;
+  const daysRemaining = Math.max(1, Math.ceil(remainingMs / DAY_MS));
   const daily = remaining / daysRemaining;
   quotaNumber.textContent = formatQuota(remaining);
   quotaFill.style.width = `${remaining}%`;
-  barArea.style.setProperty("--progress", `${remaining}%`);
+  resetRunner.hidden = !runnerAvailable;
+  resetArrows.hidden = !runnerAvailable;
+  if (runnerAvailable) {
+    const resetProgress = clamp((remainingMs / durationMs) * 100, 0, 100);
+    barArea.style.setProperty("--reset-progress", `${resetProgress}%`);
+    resetCountdown.textContent = t("resetCountdown", { value: String(Math.max(0, Math.ceil(remainingMs / HOUR_MS))) });
+  } else {
+    barArea.style.removeProperty("--reset-progress");
+    resetCountdown.textContent = "";
+  }
   quotaReset.textContent = t("quotaReset", { name: localizedWindowName(item.name), time: formatReset(resetAt) });
   quotaDaily.textContent = t("dailyAvailable", { value: daily.toFixed(1) });
   applyTheme(remaining < 15 ? "danger" : remaining < 50 ? "warning" : "healthy");

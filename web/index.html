@@ -41,7 +41,13 @@
         <div id="quota-content" hidden>
           <p id="quota-value" class="quota-value"><span id="quota-number">--</span><span class="quota-symbol">%</span></p>
           <div id="bar-area" class="bar-area">
-            <img class="progress-mascot" src="/assets/progress-mascot.gif" alt="" aria-hidden="true">
+            <div class="reset-track">
+              <div id="reset-arrows" class="reset-arrows" aria-hidden="true"><span>&lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt; &lt;</span></div>
+              <div id="reset-runner" class="reset-runner" hidden>
+                <img class="progress-mascot" src="/assets/progress-mascot.gif" alt="" aria-hidden="true">
+                <span id="reset-countdown" class="reset-countdown"></span>
+              </div>
+            </div>
             <div class="bar" aria-hidden="true"><span id="quota-fill"></span></div>
           </div>
           <div class="quota-meta">

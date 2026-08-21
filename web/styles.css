@@ -174,22 +174,68 @@ h2 { font-size: 25px; line-height: 1; letter-spacing: -.045em; }
 .quota-symbol { letter-spacing: 0; }
 
 .bar-area {
-  --progress: 0%;
+  --reset-progress: 0%;
+  --runner-reserved-width: 132px;
   position: relative;
   padding-top: 34px;
 }
 
-.progress-mascot {
+.reset-track {
   position: absolute;
-  z-index: 2;
-  left: clamp(16px, var(--progress), calc(100% - 16px));
+  inset: 0 var(--runner-reserved-width) 0 0;
+}
+
+.reset-runner {
+  position: absolute;
+  z-index: 3;
+  left: var(--reset-progress);
   bottom: 9px;
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  white-space: nowrap;
+  transition: left .55s cubic-bezier(.2, .8, .2, 1);
+}
+
+.progress-mascot {
   width: auto;
   height: 30px;
   object-fit: contain;
   pointer-events: none;
   transform-origin: 50% 100%;
   animation: progressMascot 2.2s ease-in-out infinite;
+}
+
+.reset-countdown {
+  margin-left: -21px;
+  padding-bottom: 3px;
+  color: var(--ink);
+  font-size: clamp(9px, 2.55vw, 11px);
+  font-weight: 650;
+  line-height: 1;
+  text-shadow: 0 0 12px rgba(var(--accent-rgb), .24);
+}
+
+.reset-arrows {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  bottom: 12px;
+  width: var(--reset-progress);
+  overflow: hidden;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 16px;
+  white-space: nowrap;
+  text-shadow: 0 0 8px rgba(var(--accent-rgb), .8);
+  transition: width .55s cubic-bezier(.2, .8, .2, 1), color .35s ease;
+}
+
+.reset-arrows span {
+  display: inline-block;
+  word-spacing: 3px;
+  animation: resetArrowFlow .8s linear infinite;
 }
 
 .bar {
@@ -471,6 +517,11 @@ form button {
   50% { transform: translateX(-50%) translateY(-2px) rotate(1.5deg); }
 }
 
+@keyframes resetArrowFlow {
+  from { transform: translateX(0); }
+  to { transform: translateX(-14px); }
+}
+
 @keyframes completion-flash {
   0% { background: transparent; box-shadow: 0 0 0 0 transparent; }
   16% { background: rgba(var(--accent-rgb), .62); box-shadow: 0 0 0 1px var(--accent), 0 0 38px rgba(var(--accent-rgb), .62); }
@@ -482,6 +533,8 @@ form button {
   .shell { padding-inline: 16px; }
   #dashboard { margin-top: 28px; }
   .quota-value { margin-top: 18px; }
+  .bar-area { --runner-reserved-width: 132px; }
+  .reset-arrows { font-size: 13px; }
   .tasks-head { margin: 34px 2px 12px; }
   .quota-meta { gap: 7px; }
   .host-filter { gap: 6px; margin-bottom: 10px; }
