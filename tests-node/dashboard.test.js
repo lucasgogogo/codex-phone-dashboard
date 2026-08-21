@@ -3,13 +3,18 @@ import assert from "node:assert/strict";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { parseQuota, parseThreadPage } from "../src-node/app-server-client.js";
+import { DASHBOARD_VERSION, parseQuota, parseThreadPage } from "../src-node/app-server-client.js";
 import { parseRollout } from "../src-node/rollout-observer.js";
 import { parseRemoteActivity } from "../src-node/remote-rollout-observer.js";
 import { createRuntimeInfo, writeRuntimeInfo } from "../src-node/runtime-info.js";
 import { createSessionCookie, isSessionAuthenticated, loadOrCreateSessionSecret, rotateSessionSecret, SESSION_MAX_AGE_SECONDS } from "../src-node/auth-state.js";
 import { buildCompanyTasks, buildTasks, SnapshotService } from "../src-node/snapshot-service.js";
 import { sortTasksForDisplay } from "../web/task-order.js";
+
+test("app-server client version follows package metadata", async () => {
+  const packageMetadata = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+  assert.equal(DASHBOARD_VERSION, packageMetadata.version);
+});
 
 test("quota parser exposes only normalized usage fields", () => {
   const quota = parseQuota({
@@ -19,8 +24,9 @@ test("quota parser exposes only normalized usage fields", () => {
     },
     rateLimitResetCredits: { availableCount: 2 }
   });
-  assert.deepEqual(quota.windows.map(({ name, usedPercent }) => ({ name, usedPercent })), [
-    { name: "5 小时", usedPercent: 23 }, { name: "7 天", usedPercent: 51 }
+  assert.deepEqual(quota.windows, [
+    { name: "5 小时", usedPercent: 23, resetsAt: 2_000_000_000, windowDurationMins: 300 },
+    { name: "7 天", usedPercent: 51, resetsAt: 2_000_000_001, windowDurationMins: 10080 }
   ]);
   assert.equal(quota.resetCredits, 2);
 });
@@ -155,6 +161,9 @@ test("dashboard UI includes bilingual quota states, seven-task expansion, hostna
   ]);
   assert.match(html, /© 2026 lucasgogogo/);
   assert.match(html, /progress-mascot\.gif/);
+  assert.match(html, /id="reset-arrows"/);
+  assert.match(html, /id="reset-runner"/);
+  assert.match(html, /id="reset-countdown"/);
   assert.match(html, /id="quota-number"/);
   assert.match(html, /class="quota-symbol"/);
   assert.match(script, /DEFAULT_TASK_LIMIT = 7/);
@@ -162,6 +171,12 @@ test("dashboard UI includes bilingual quota states, seven-task expansion, hostna
   assert.match(script, /remaining < 50/);
   assert.match(script, /接下来平均每日可用/);
   assert.match(script, /Average daily allowance/);
+  assert.match(script, /还有 \{value\} 小时重置/);
+  assert.match(script, /remainingMs \/ durationMs/);
+  assert.match(styles, /@keyframes resetArrowFlow/);
+  assert.match(styles, /color: var\(--accent\)/);
+  assert.match(styles, /\.reset-runner\s*\{[\s\S]*?gap:\s*0;/);
+  assert.match(styles, /\.reset-countdown\s*\{[\s\S]*?margin-left:\s*-21px;/);
   assert.match(script, /codex-phone-language/);
   assert.match(html, /输入电脑端 AI 告诉你的 6 位配对码/);
   assert.match(script, /No code\? Ask your AI/);

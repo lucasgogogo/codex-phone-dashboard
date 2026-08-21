@@ -22,6 +22,7 @@ The screenshots are generated from the real 390×844 page with synthetic compute
 
 - Uses Safari or any modern phone browser; no iOS/Android app is required.
 - Makes available quota the main visual, with green (50%+), yellow (15–49.9%), and pale red (below 15%) themes.
+- Keeps the quota fill tied only to remaining quota, while the basketball mascot moves toward reset time with full-length left arrows and a countdown placed directly behind it.
 - Shows seven recent tasks, with an expandable remainder list.
 - Keeps running tasks first; a newly completed task moves directly below them and flashes once.
 - Uses actual computer names in compact filter pills.
@@ -111,7 +112,7 @@ After the normal LaunchAgent installation, ask your AI to run `sh scripts/reset-
 4. Enter the code within 10 minutes.
 5. Use the `EN / 中` button to change language.
 
-The upgrade to `v1.2.0` requires one final pairing. After that, computer restarts and Dashboard updates do not require the code again unless Safari website data is cleared or paired devices are explicitly revoked.
+Upgrading from a version earlier than `v1.2.0` requires one final pairing. After that, computer restarts and Dashboard updates—including `v1.3.0`—do not require the code again unless Safari website data is cleared or paired devices are explicitly revoked.
 
 ## Let an AI install it
 

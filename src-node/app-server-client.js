@@ -1,5 +1,10 @@
 import { spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+
+export const DASHBOARD_VERSION = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf8")
+).version;
 
 const SOURCE_KINDS = [
   "cli", "vscode", "exec", "appServer", "subAgent", "subAgentReview",
@@ -85,7 +90,7 @@ export class AppServerClient {
       send({
         id: 1,
         method: "initialize",
-        params: { clientInfo: { name: "codex-phone-dashboard", version: "0.1.0" } }
+        params: { clientInfo: { name: "codex-phone-dashboard", version: DASHBOARD_VERSION } }
       });
     });
   }
@@ -109,7 +114,7 @@ export function parseQuota(result) {
     if (!Number.isFinite(used) || used < 0 || used > 100 || duration <= 0 || !Number.isFinite(resetsAt)) {
       throw new Error("Codex quota response contains invalid values");
     }
-    return { name: formatWindow(duration), usedPercent: used, resetsAt };
+    return { name: formatWindow(duration), usedPercent: used, resetsAt, windowDurationMins: duration };
   });
   return {
     windows,
