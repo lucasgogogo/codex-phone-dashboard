@@ -259,12 +259,13 @@ test("paired browser session survives dashboard restarts and expires only after 
 });
 
 test("revocation scripts share the canonical auth path and fail closed outside installed background mode", async () => {
-  const [authState, windowsStartup, windowsReset, macReset, detachedStart] = await Promise.all([
+  const [authState, windowsStartup, windowsReset, macReset, detachedStart, hiddenStart] = await Promise.all([
     readFile(new URL("../src-node/auth-state.js", import.meta.url), "utf8"),
     readFile(new URL("../scripts/configure-startup-task.ps1", import.meta.url), "utf8"),
     readFile(new URL("../scripts/reset-paired-devices.ps1", import.meta.url), "utf8"),
     readFile(new URL("../scripts/reset-paired-devices.sh", import.meta.url), "utf8"),
-    readFile(new URL("../scripts/start-dashboard-detached.ps1", import.meta.url), "utf8")
+    readFile(new URL("../scripts/start-dashboard-detached.ps1", import.meta.url), "utf8"),
+    readFile(new URL("../scripts/start-dashboard-hidden.vbs", import.meta.url), "utf8")
   ]);
   assert.doesNotMatch(authState, /CODEX_PHONE_AUTH_STATE_PATH/);
   assert.match(authState, /CodexPhoneDashboard", "auth-state\.json/);
@@ -277,8 +278,36 @@ test("revocation scripts share the canonical auth path and fail closed outside i
   assert.match(macReset, /shasum -a 256/);
   assert.match(macReset, /Authorization state did not rotate/);
   assert.match(windowsStartup, /function Get-DashboardProcesses/);
-  assert.match(windowsStartup, /Unable to stop the exact Codex Phone Dashboard server process/);
+  assert.match(windowsStartup, /function Get-DashboardSupervisorProcesses/);
+  assert.match(windowsStartup, /function Get-DashboardWindowlessHosts/);
+  assert.match(windowsStartup, /\$orderedProcesses = @\(\$supervisorProcesses\) \+ @\(\$windowlessHosts\) \+ @\(\$dashboardProcesses\)/);
+  assert.match(windowsStartup, /Unable to stop the exact Codex Phone Dashboard runtime process tree/);
+  assert.match(windowsStartup, /Supervised = \[bool\]\$supervised/);
+  assert.match(windowsStartup, /\$status\.ProcessId -and \$status\.Supervised/);
+  assert.match(windowsStartup, /Dashboard did not become supervised within 30 seconds/);
+  assert.match(windowsStartup, /-RestartCount 10/);
+  assert.match(windowsStartup, /System32\\wscript\.exe/);
+  assert.match(windowsStartup, /\/\/B \/\/NoLogo/);
+  assert.match(windowsStartup, /start-dashboard-hidden\.vbs/);
+  assert.match(windowsStartup, /WindowlessHost = \$windowlessHost/);
+  assert.match(windowsStartup, /Test-WindowlessTaskAction/);
+  assert.doesNotMatch(windowsStartup, /New-ScheduledTaskAction -Execute \$powershellPath/);
+  assert.match(hiddenStart, /CreateObject\("WScript\.Shell"\)/);
+  assert.match(hiddenStart, /shell\.Run\(command, 0, True\)/);
+  assert.match(hiddenStart, /-NonInteractive/);
+  assert.match(hiddenStart, /start-dashboard-detached\.ps1/);
   assert.match(detachedStart, /existingServers\.Count -gt 0/);
+  assert.doesNotMatch(detachedStart, /Start-Process/);
+  assert.match(detachedStart, /& \$nodePath \$serverPath/);
+  assert.match(detachedStart, /service-events\.log/);
+  assert.match(detachedStart, /\$maxLogLines = 100/);
+  assert.match(detachedStart, /\$allowedLine =/);
+  assert.match(detachedStart, /\[System\.IO\.File\]::WriteAllText/);
+  assert.match(detachedStart, /while \(\$true\)/);
+  assert.match(detachedStart, /server_started/);
+  assert.match(detachedStart, /server_exit code=/);
+  assert.match(detachedStart, /restart_wait_seconds=5/);
+  assert.match(detachedStart, /Start-Sleep -Seconds 5/);
 });
 
 test("release publishing is explicit, tag-verified, and safe to validate without mutation", async () => {

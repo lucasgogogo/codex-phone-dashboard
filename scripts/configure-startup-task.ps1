@@ -10,6 +10,7 @@ $taskName = 'Codex Phone Dashboard'
 $projectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $serverPath = Join-Path $projectRoot 'src-node\server.js'
 $launcherPath = Join-Path $projectRoot 'scripts\start-dashboard-detached.ps1'
+$windowlessLauncherPath = Join-Path $projectRoot 'scripts\start-dashboard-hidden.vbs'
 $runtimeInfoPath = Join-Path $env:LOCALAPPDATA 'CodexPhoneDashboard\runtime-info.json'
 $runtimeInfoDir = Split-Path -Parent $runtimeInfoPath
 $nodePath = (Get-Command node -ErrorAction Stop).Source
@@ -19,9 +20,30 @@ function Get-DashboardTask {
   Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
 }
 
+function Test-WindowlessTaskAction {
+  param($Task)
+  if (-not $Task -or $Task.Actions.Count -ne 1) { return $false }
+  $action = $Task.Actions[0]
+  $expectedHost = Join-Path $env:SystemRoot 'System32\wscript.exe'
+  return ([string]$action.Execute).Equals($expectedHost, [System.StringComparison]::OrdinalIgnoreCase) -and
+    ([string]$action.Arguments).IndexOf($windowlessLauncherPath, [System.StringComparison]::OrdinalIgnoreCase) -ge 0
+}
+
 function Get-DashboardProcesses {
   @(Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" -ErrorAction SilentlyContinue | Where-Object {
     $_.CommandLine -and $_.CommandLine.IndexOf($serverPath, [System.StringComparison]::OrdinalIgnoreCase) -ge 0
+  })
+}
+
+function Get-DashboardSupervisorProcesses {
+  @(Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" -ErrorAction SilentlyContinue | Where-Object {
+    $_.CommandLine -and $_.CommandLine.IndexOf($launcherPath, [System.StringComparison]::OrdinalIgnoreCase) -ge 0
+  })
+}
+
+function Get-DashboardWindowlessHosts {
+  @(Get-CimInstance Win32_Process -Filter "Name = 'wscript.exe'" -ErrorAction SilentlyContinue | Where-Object {
+    $_.CommandLine -and $_.CommandLine.IndexOf($windowlessLauncherPath, [System.StringComparison]::OrdinalIgnoreCase) -ge 0
   })
 }
 
@@ -49,18 +71,25 @@ function Get-LiveDashboardRuntime {
 }
 
 function Stop-DashboardProcess {
+  $supervisorProcesses = @(Get-DashboardSupervisorProcesses)
+  $windowlessHosts = @(Get-DashboardWindowlessHosts)
   $dashboardProcesses = @(Get-DashboardProcesses)
-  foreach ($dashboardProcess in $dashboardProcesses) {
-    Stop-Process -Id ([int]$dashboardProcess.ProcessId) -Force
+  $orderedProcesses = @($supervisorProcesses) + @($windowlessHosts) + @($dashboardProcesses)
+  foreach ($runtimeProcess in $orderedProcesses) {
+    Stop-Process -Id ([int]$runtimeProcess.ProcessId) -Force -ErrorAction SilentlyContinue
   }
-  foreach ($dashboardProcess in $dashboardProcesses) {
+  foreach ($runtimeProcess in $orderedProcesses) {
     for ($attempt = 0; $attempt -lt 10; $attempt++) {
-      if (-not (Get-Process -Id ([int]$dashboardProcess.ProcessId) -ErrorAction SilentlyContinue)) { break }
+      if (-not (Get-Process -Id ([int]$runtimeProcess.ProcessId) -ErrorAction SilentlyContinue)) { break }
       Start-Sleep -Milliseconds 200
     }
   }
-  $remaining = @(Get-DashboardProcesses)
-  if ($remaining.Count -gt 0) { throw 'Unable to stop the exact Codex Phone Dashboard server process.' }
+  $remainingSupervisors = @(Get-DashboardSupervisorProcesses)
+  $remainingHosts = @(Get-DashboardWindowlessHosts)
+  $remainingServers = @(Get-DashboardProcesses)
+  if (($remainingSupervisors.Count + $remainingHosts.Count + $remainingServers.Count) -gt 0) {
+    throw 'Unable to stop the exact Codex Phone Dashboard runtime process tree.'
+  }
 }
 
 function Show-DashboardStatus {
@@ -68,9 +97,13 @@ function Show-DashboardStatus {
   $info = if ($task) { Get-ScheduledTaskInfo -TaskName $taskName } else { $null }
   $runtime = Get-LiveDashboardRuntime
   $runtimeLive = [bool]$runtime
+  $windowlessHost = [bool](Test-WindowlessTaskAction -Task $task)
+  $supervised = $runtimeLive -and $task -and ([string]$task.State -eq 'Running') -and $windowlessHost
   [pscustomobject]@{
     Installed = [bool]$task
     State = if (-not $task) { 'NotInstalled' } elseif ($runtimeLive) { 'Running' } else { 'Stopped' }
+    Supervised = [bool]$supervised
+    WindowlessHost = $windowlessHost
     SchedulerState = if ($task) { [string]$task.State } else { 'NotInstalled' }
     LastTaskResult = if ($info) { $info.LastTaskResult } else { $null }
     ProcessId = if ($runtimeLive) { $runtime.processId } else { $null }
@@ -81,27 +114,27 @@ function Show-DashboardStatus {
 }
 
 function Wait-DashboardReady {
-  for ($attempt = 0; $attempt -lt 15; $attempt++) {
+  for ($attempt = 0; $attempt -lt 30; $attempt++) {
     $status = Show-DashboardStatus
-    if ($status.ProcessId) { return $status }
+    if ($status.ProcessId -and $status.Supervised) { return $status }
     Start-Sleep -Seconds 1
   }
-  Show-DashboardStatus
+  throw 'Dashboard did not become supervised within 30 seconds.'
 }
 
 switch ($Action) {
   'Install' {
-    if (-not (Test-Path -LiteralPath $serverPath) -or -not (Test-Path -LiteralPath $launcherPath)) { throw 'Dashboard entry files are missing.' }
+    if (-not (Test-Path -LiteralPath $serverPath) -or -not (Test-Path -LiteralPath $launcherPath) -or -not (Test-Path -LiteralPath $windowlessLauncherPath)) { throw 'Dashboard entry files are missing.' }
     $existingTask = Get-DashboardTask
     if ($existingTask -and $existingTask.State -eq 'Running') { Stop-ScheduledTask -TaskName $taskName }
     Stop-DashboardProcess
     Protect-RuntimeDirectory
-    $powershellPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
-    $arguments = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $launcherPath + '"'
-    $taskAction = New-ScheduledTaskAction -Execute $powershellPath -Argument $arguments -WorkingDirectory $projectRoot
+    $wscriptPath = Join-Path $env:SystemRoot 'System32\wscript.exe'
+    $arguments = '//B //NoLogo "' + $windowlessLauncherPath + '"'
+    $taskAction = New-ScheduledTaskAction -Execute $wscriptPath -Argument $arguments -WorkingDirectory $projectRoot
     $trigger = New-ScheduledTaskTrigger -AtLogOn -User $currentUser
     $principal = New-ScheduledTaskPrincipal -UserId $currentUser -LogonType Interactive -RunLevel Limited
-    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero)
+    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew -RestartCount 10 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero)
     Register-ScheduledTask -TaskName $taskName -Action $taskAction -Trigger $trigger -Principal $principal -Settings $settings -Description 'Private read-only Codex dashboard for a phone on the same Wi-Fi.' -Force | Out-Null
     Start-ScheduledTask -TaskName $taskName
     Wait-DashboardReady
@@ -116,8 +149,11 @@ switch ($Action) {
     Show-DashboardStatus
   }
   'Start' {
-    if (-not (Get-DashboardTask)) { throw 'Dashboard task is not installed.' }
-    if (Get-LiveDashboardRuntime) { return Show-DashboardStatus }
+    $task = Get-DashboardTask
+    if (-not $task) { throw 'Dashboard task is not installed.' }
+    $runtime = Get-LiveDashboardRuntime
+    if ($runtime -and ([string]$task.State -eq 'Running')) { return Show-DashboardStatus }
+    if ($runtime) { Stop-DashboardProcess }
     Protect-RuntimeDirectory
     Start-ScheduledTask -TaskName $taskName
     Wait-DashboardReady

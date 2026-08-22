@@ -66,7 +66,9 @@ cd codex-phone-dashboard
 powershell -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1
 ```
 
-安装器会运行测试、创建一个仅允许 TCP 43117 和 `LocalSubnet` 的入站规则，并建立当前用户登录启动任务。完成后会显示手机要打开的私有地址和 6 位配对码。
+安装器会运行测试、创建一个仅允许 TCP 43117 和 `LocalSubnet` 的入站规则，并建立当前用户登录启动任务。Windows 后台入口使用系统自带、没有控制台窗口的 Windows Script Host 持有隐藏 PowerShell supervisor，避免误关窗口导致手机断线；Node 意外退出后 supervisor 会等待 5 秒自动恢复。完成后会显示手机要打开的私有地址和 6 位配对码。
+
+在 Windows 上，隐藏的登录任务会持续持有一个轻量监管器。Node 服务意外退出时，监管器会在 5 秒后重新启动，不会让手机长期停在断开状态。有界的本机生命周期日志只记录 UTC 时间、生命周期标签和数字退出码，不记录配对码或 Dashboard 数据。
 
 配对码由 Dashboard 在电脑本地生成。安装你的 AI 可以读取它；如果安装结果里没有看到，直接问 AI：“我的 Codex Phone Dashboard 配对码是多少？”
 

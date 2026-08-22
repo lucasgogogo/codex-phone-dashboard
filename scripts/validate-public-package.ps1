@@ -73,6 +73,7 @@ try {
     'src-node/app-server-client.js', 'src-node/rollout-observer.js', 'src-node/runtime-info.js', 'src-node/auth-state.js',
     'src-node/remote-rollout-observer.js', 'scripts/install-windows.ps1',
     'scripts/configure-startup-task.ps1', 'scripts/configure-windows-firewall.ps1', 'scripts/start-dashboard-detached.ps1',
+    'scripts/start-dashboard-hidden.vbs',
     'scripts/install-macos.sh', 'scripts/configure-startup-macos.sh', 'scripts/capture-readme-screenshots.mjs',
     'scripts/validate-public-package.ps1', 'scripts/reset-paired-devices.ps1', 'scripts/reset-paired-devices.sh',
     'scripts/publish-release.ps1',
