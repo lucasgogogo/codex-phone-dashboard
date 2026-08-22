@@ -68,6 +68,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1
 
 The installer runs the tests, creates one inbound rule limited to TCP 43117 and `LocalSubnet`, and adds a current-user logon task. It prints the private URL and pairing code when ready.
 
+On Windows, the logon task uses the built-in windowless Windows Script Host to own a hidden PowerShell supervisor, so there is no service console to close accidentally. If the Node server exits unexpectedly, the supervisor starts it again after five seconds instead of leaving the phone disconnected. A bounded local lifecycle log records only UTC timestamps, lifecycle labels, and numeric exit codes; it never records pairing codes or Dashboard data.
+
 The Dashboard generates the code locally. The AI installing it can read the code; if it was not shown, ask: “What is my Codex Phone Dashboard pairing code?”
 
 Useful controls:
