@@ -140,6 +140,24 @@ Then:
 
 Codex users can also install the repository skill and invoke `$codex-phone-dashboard`. A Codex skill is a directory with a required `SKILL.md` and optional supporting resources, and can be invoked explicitly or matched from its description; see [OpenAI's official skill guide](https://learn.chatgpt.com/docs/build-skills).
 
+## Maintainer release workflow
+
+Maintainers can publish a GitHub Release from the background after completing GitHub CLI authorization once. The release helper fails closed unless the working tree is clean, the current branch is `main`, local `HEAD` exactly matches `origin/main`, `package.json` matches the requested version, and the remote tag resolves to that same commit.
+
+Read-only validation of an existing or release-ready tag:
+
+```powershell
+.\scripts\publish-release.ps1 -Version v1.3.0 -ValidateOnly
+```
+
+Publishing a new, already-pushed tag requires the explicit `-Publish` switch and a release-notes file:
+
+```powershell
+.\scripts\publish-release.ps1 -Version v1.4.0 -Publish -NotesFile .\release-notes-v1.4.0.md
+```
+
+The helper refuses duplicate Releases and uses GitHub CLI's `--verify-tag`, `--latest`, and `--notes-file` safeguards. See the official [`gh auth login`](https://cli.github.com/manual/gh_auth_login) and [`gh release create`](https://cli.github.com/manual/gh_release_create) documentation.
+
 ## Optional remote computer
 
 Remote monitoring is disabled unless `CODEX_PHONE_REMOTE_SSH_HOST` is set. It requires an existing key-based SSH connection and a usable Codex CLI on the remote computer.

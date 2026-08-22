@@ -29,7 +29,8 @@ try {
   $powerShellFiles = @(
     'scripts/install-windows.ps1', 'scripts/configure-startup-task.ps1',
     'scripts/configure-windows-firewall.ps1', 'scripts/start-dashboard-detached.ps1',
-    'scripts/validate-public-package.ps1', 'scripts/reset-paired-devices.ps1'
+    'scripts/validate-public-package.ps1', 'scripts/reset-paired-devices.ps1',
+    'scripts/publish-release.ps1'
   )
   foreach ($powerShellFile in $powerShellFiles) {
     $tokens = $null
@@ -74,6 +75,7 @@ try {
     'scripts/configure-startup-task.ps1', 'scripts/configure-windows-firewall.ps1', 'scripts/start-dashboard-detached.ps1',
     'scripts/install-macos.sh', 'scripts/configure-startup-macos.sh', 'scripts/capture-readme-screenshots.mjs',
     'scripts/validate-public-package.ps1', 'scripts/reset-paired-devices.ps1', 'scripts/reset-paired-devices.sh',
+    'scripts/publish-release.ps1',
     'skills/codex-phone-dashboard/SKILL.md', 'skills/codex-phone-dashboard/agents/openai.yaml',
     'skills/codex-phone-dashboard/references/troubleshooting.md', 'tests-node/dashboard.test.js',
     'web/assets/progress-mascot.gif',

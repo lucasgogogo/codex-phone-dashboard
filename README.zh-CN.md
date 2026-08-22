@@ -140,6 +140,24 @@ chmod +x scripts/install-macos.sh scripts/configure-startup-macos.sh
 
 Codex 用户还可以安装仓库里的 Skill，然后调用 `$codex-phone-dashboard`。OpenAI 官方说明：Skill 是包含必需 `SKILL.md` 和可选资源的目录，可以显式调用，也可以按 description 自动匹配；参见 [OpenAI Skill 官方说明](https://learn.chatgpt.com/docs/build-skills)。
 
+## 维护者后台发布流程
+
+维护者只需完成一次 GitHub CLI 授权，之后即可从后台发布 GitHub Release。发布助手采用“条件不满足就停止”的安全策略：工作区必须干净、当前分支必须是 `main`、本地 `HEAD` 必须与 `origin/main` 完全一致、`package.json` 必须匹配指定版本，而且远端标签必须指向同一个提交。
+
+只读验证一个现有或准备发布的标签：
+
+```powershell
+.\scripts\publish-release.ps1 -Version v1.3.0 -ValidateOnly
+```
+
+发布一个已经推送到 GitHub 的新标签时，必须明确提供 `-Publish` 和 Release 说明文件：
+
+```powershell
+.\scripts\publish-release.ps1 -Version v1.4.0 -Publish -NotesFile .\release-notes-v1.4.0.md
+```
+
+助手会拒绝重复 Release，并使用 GitHub CLI 的 `--verify-tag`、`--latest` 和 `--notes-file` 安全参数。官方资料：[`gh auth login`](https://cli.github.com/manual/gh_auth_login) 与 [`gh release create`](https://cli.github.com/manual/gh_release_create)。
+
 ## 可选：显示另一台电脑
 
 只有设置 `CODEX_PHONE_REMOTE_SSH_HOST` 后，远端监控才会启用。它要求两台电脑之间已经配置好免交互 SSH 密钥，并且远端电脑能运行 Codex CLI。

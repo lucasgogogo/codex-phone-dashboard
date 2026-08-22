@@ -280,3 +280,34 @@ test("revocation scripts share the canonical auth path and fail closed outside i
   assert.match(windowsStartup, /Unable to stop the exact Codex Phone Dashboard server process/);
   assert.match(detachedStart, /existingServers\.Count -gt 0/);
 });
+
+test("release publishing is explicit, tag-verified, and safe to validate without mutation", async () => {
+  const releaseScript = await readFile(new URL("../scripts/publish-release.ps1", import.meta.url), "utf8");
+  const releaseLookupIndex = releaseScript.indexOf("$releaseState = Get-ReleaseState");
+  const packageGuardIndexes = [...releaseScript.matchAll(/if \(\$manifest\.version -ne \$packageVersion\)/g)].map((match) => match.index);
+  assert.match(releaseScript, /ParameterSetName = 'Validate'/);
+  assert.match(releaseScript, /ParameterSetName = 'Publish'/);
+  assert.match(releaseScript, /\[switch\]\$ValidateOnly/);
+  assert.match(releaseScript, /\[switch\]\$Publish/);
+  assert.match(releaseScript, /'status', '--short'/);
+  assert.match(releaseScript, /origin\/main/);
+  assert.match(releaseScript, /'ls-remote', '--exit-code', 'origin', 'refs\/heads\/main'/);
+  assert.doesNotMatch(releaseScript, /'rev-parse', 'origin\/main'/);
+  assert.match(releaseScript, /'--verify-tag'/);
+  assert.match(releaseScript, /'--latest'/);
+  assert.match(releaseScript, /'--notes-file'/);
+  assert.match(releaseScript, /already exists; refusing to publish a duplicate/);
+  assert.match(releaseScript, /if \(\$ValidateOnly\)/);
+  assert.match(releaseScript, /VALIDATED existing Release .* commit \$remoteTagCommit/);
+  assert.match(releaseScript, /Unpublished tag .* does not resolve to current main/);
+  assert.equal(packageGuardIndexes.length, 2);
+  assert.ok(packageGuardIndexes.every((index) => index > releaseLookupIndex));
+  assert.match(releaseScript, /Get-LatestReleaseTag/);
+  assert.match(releaseScript, /Get-RemoteTagCommit/);
+  assert.match(releaseScript, /does not match Release repository/);
+  assert.match(releaseScript, /Published Release tag or title does not match/);
+  assert.match(releaseScript, /Published Release target does not match/);
+  assert.match(releaseScript, /Published Release tag no longer resolves/);
+  assert.match(releaseScript, /is not the Latest Release/);
+  assert.doesNotMatch(releaseScript, /HTTP 404\|Not Found/);
+});
