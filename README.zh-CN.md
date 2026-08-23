@@ -114,7 +114,7 @@ chmod +x scripts/install-macos.sh scripts/configure-startup-macos.sh
 4. 在 10 分钟内输入配对码。
 5. 用右上角的 `EN / 中` 切换页面语言。
 
-从低于 `v1.2.0` 的版本升级时需要最后配对一次。之后只要不清除 Safari 网站数据、也不主动撤销设备，包括升级到 `v1.3.0` 在内的电脑重启或 Dashboard 更新都不需要重新输入。
+从低于 `v1.2.0` 的版本升级时需要最后配对一次。之后只要不清除 Safari 网站数据、也不主动撤销设备，包括升级到 `v1.3.1` 在内的电脑重启或 Dashboard 更新都不需要重新输入。
 
 ## 让 AI 自动帮你安装
 
@@ -149,7 +149,7 @@ Codex 用户还可以安装仓库里的 Skill，然后调用 `$codex-phone-dashb
 只读验证一个现有或准备发布的标签：
 
 ```powershell
-.\scripts\publish-release.ps1 -Version v1.3.0 -ValidateOnly
+.\scripts\publish-release.ps1 -Version v1.3.1 -ValidateOnly
 ```
 
 发布一个已经推送到 GitHub 的新标签时，必须明确提供 `-Publish` 和 Release 说明文件：
