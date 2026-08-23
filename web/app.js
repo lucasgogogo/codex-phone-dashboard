@@ -214,9 +214,11 @@ function renderQuota() {
   if (runnerAvailable) {
     const resetProgress = clamp((remainingMs / durationMs) * 100, 0, 100);
     barArea.style.setProperty("--reset-progress", `${resetProgress}%`);
+    resetRunner.dataset.labelSide = resetProgress >= 75 ? "before" : "after";
     resetCountdown.textContent = t("resetCountdown", { value: String(Math.max(0, Math.ceil(remainingMs / HOUR_MS))) });
   } else {
     barArea.style.removeProperty("--reset-progress");
+    delete resetRunner.dataset.labelSide;
     resetCountdown.textContent = "";
   }
   quotaReset.textContent = t("quotaReset", { name: localizedWindowName(item.name), time: formatReset(resetAt) });

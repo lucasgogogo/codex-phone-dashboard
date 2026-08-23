@@ -65,31 +65,53 @@ try {
       await page.locator("#dashboard:not([hidden])").waitFor();
       await page.waitForTimeout(state.offline ? 350 : 150);
       await page.addStyleTag({ content: ".reset-arrows span,.progress-mascot{animation-play-state:paused!important}" });
-      const visualState = await page.evaluate(() => ({
-        overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-        language: document.documentElement.lang,
-        theme: document.body.dataset.quotaTheme,
-        taskCount: document.querySelectorAll(".task").length,
-        offline: document.querySelector("#connection").classList.contains("offline"),
-        hosts: [...document.querySelectorAll("#host-filter button:not([hidden])")].map((button) => button.textContent.trim()),
-        quotaFill: document.querySelector("#quota-fill").style.width,
-        runnerHidden: document.querySelector("#reset-runner").hidden,
-        arrowHidden: document.querySelector("#reset-arrows").hidden,
-        countdown: document.querySelector("#reset-countdown").textContent.trim(),
-        mascotLoaded: document.querySelector(".progress-mascot").complete && document.querySelector(".progress-mascot").naturalWidth > 0,
-        runnerGap: Math.round(document.querySelector("#reset-countdown").getBoundingClientRect().left - document.querySelector(".progress-mascot").getBoundingClientRect().right),
-        documentWidth: document.documentElement.scrollWidth,
-        viewportWidth: document.documentElement.clientWidth,
-        runnerLeft: Math.round(document.querySelector("#reset-runner").getBoundingClientRect().left),
-        runnerRight: Math.round(document.querySelector("#reset-runner").getBoundingClientRect().right),
-        arrowRight: Math.round(document.querySelector("#reset-arrows").getBoundingClientRect().right),
-        shellRight: Math.round(document.querySelector(".shell").getBoundingClientRect().right)
-      }));
+      const visualState = await page.evaluate(() => {
+        const barRect = document.querySelector(".bar").getBoundingClientRect();
+        const mascotRect = document.querySelector(".progress-mascot").getBoundingClientRect();
+        const runnerRect = document.querySelector("#reset-runner").getBoundingClientRect();
+        const laneRect = document.querySelector(".reset-runner-lane").getBoundingClientRect();
+        const arrowRect = document.querySelector("#reset-arrows").getBoundingClientRect();
+        const arrowTextRect = document.querySelector("#reset-arrows span").getBoundingClientRect();
+        const countdownRect = document.querySelector("#reset-countdown").getBoundingClientRect();
+        const arrowsOverlapCountdown = arrowRect.left < countdownRect.right && arrowRect.right > countdownRect.left && arrowRect.top < countdownRect.bottom && arrowRect.bottom > countdownRect.top;
+        return {
+          overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+          language: document.documentElement.lang,
+          theme: document.body.dataset.quotaTheme,
+          taskCount: document.querySelectorAll(".task").length,
+          offline: document.querySelector("#connection").classList.contains("offline"),
+          hosts: [...document.querySelectorAll("#host-filter button:not([hidden])")].map((button) => button.textContent.trim()),
+          quotaFill: document.querySelector("#quota-fill").style.width,
+          runnerHidden: document.querySelector("#reset-runner").hidden,
+          arrowHidden: document.querySelector("#reset-arrows").hidden,
+          countdown: document.querySelector("#reset-countdown").textContent.trim(),
+          labelSide: document.querySelector("#reset-runner").dataset.labelSide,
+          mascotLoaded: document.querySelector(".progress-mascot").complete && document.querySelector(".progress-mascot").naturalWidth > 0,
+          runnerGap: Math.round(countdownRect.left - mascotRect.right),
+          runnerRatio: (runnerRect.left - laneRect.left) / laneRect.width,
+          mascotCentered: Math.abs(((mascotRect.left + mascotRect.right) / 2) - runnerRect.left) <= .5,
+          mascotInsideBar: mascotRect.left >= barRect.left - .5 && mascotRect.right <= barRect.right + .5,
+          documentWidth: document.documentElement.scrollWidth,
+          viewportWidth: document.documentElement.clientWidth,
+          runnerLeft: Math.round(runnerRect.left),
+          runnerRight: Math.round(runnerRect.right),
+          arrowLeft: arrowRect.left,
+          arrowRight: arrowRect.right,
+          arrowWidth: arrowRect.width,
+          mascotLeft: mascotRect.left,
+          arrowsStartAtBar: Math.abs(arrowRect.left - barRect.left) <= .5,
+          arrowsStopBeforeMascot: mascotRect.left - arrowRect.right >= 2.5 && mascotRect.left - arrowRect.right <= 4.5,
+          arrowsAvoidMascot: arrowRect.right <= mascotRect.left - 2.5,
+          arrowsAvoidCountdown: !arrowsOverlapCountdown,
+          arrowTextCoversClip: arrowTextRect.right >= arrowRect.right,
+          shellRight: Math.round(document.querySelector(".shell").getBoundingClientRect().right)
+        };
+      });
       const expectedTheme = state.remaining < 15 ? "danger" : state.remaining < 50 ? "warning" : "healthy";
       const expectedCountdown = language === "en" ? "120h until reset" : "还有 120 小时重置";
       const baselineRunnerLeft = runnerPositions.get(language);
       if (baselineRunnerLeft === undefined) runnerPositions.set(language, visualState.runnerLeft);
-      if (visualState.overflow || visualState.language !== language || visualState.theme !== expectedTheme || visualState.taskCount !== 7 || visualState.offline !== state.offline || visualState.hosts.length !== 3 || visualState.quotaFill !== `${state.remaining}%` || visualState.runnerHidden || visualState.arrowHidden || visualState.countdown !== expectedCountdown || !visualState.mascotLoaded || visualState.runnerGap !== 0 || visualState.arrowRight !== visualState.runnerLeft || (baselineRunnerLeft !== undefined && visualState.runnerLeft !== baselineRunnerLeft) || errors.length) {
+      if (visualState.overflow || visualState.language !== language || visualState.theme !== expectedTheme || visualState.taskCount !== 7 || visualState.offline !== state.offline || visualState.hosts.length !== 3 || visualState.quotaFill !== `${state.remaining}%` || visualState.runnerHidden || visualState.arrowHidden || visualState.countdown !== expectedCountdown || visualState.labelSide !== "after" || !visualState.mascotLoaded || visualState.runnerGap !== 0 || Math.abs(visualState.runnerRatio - (5 / 7)) > .01 || !visualState.mascotCentered || !visualState.mascotInsideBar || !visualState.arrowsStartAtBar || !visualState.arrowsStopBeforeMascot || !visualState.arrowsAvoidMascot || !visualState.arrowsAvoidCountdown || !visualState.arrowTextCoversClip || (baselineRunnerLeft !== undefined && visualState.runnerLeft !== baselineRunnerLeft) || errors.length) {
         throw new Error(`Visual verification failed for ${language}/${state.name}: ${JSON.stringify(visualState)}; ${errors.join("; ")}`);
       }
       if (state.name === "connected-healthy-95") {
@@ -117,14 +139,35 @@ async function validateResetRunnerMotion(browser, port) {
     const page = await context.newPage();
     await page.goto(`http://127.0.0.1:${port}/?lang=en`, { waitUntil: "domcontentloaded" });
     await page.locator("#dashboard:not([hidden])").waitFor();
-    positions.push(await page.evaluate(() => ({
-      runnerLeft: Math.round(document.querySelector("#reset-runner").getBoundingClientRect().left),
-      trackLeft: Math.round(document.querySelector(".reset-track").getBoundingClientRect().left)
-    })));
+    positions.push(await page.evaluate((hours) => {
+      const barRect = document.querySelector(".bar").getBoundingClientRect();
+      const runnerRect = document.querySelector("#reset-runner").getBoundingClientRect();
+      const laneRect = document.querySelector(".reset-runner-lane").getBoundingClientRect();
+      const mascotRect = document.querySelector(".progress-mascot").getBoundingClientRect();
+      const countdownRect = document.querySelector("#reset-countdown").getBoundingClientRect();
+      const arrowRect = document.querySelector("#reset-arrows").getBoundingClientRect();
+      const arrowTextRect = document.querySelector("#reset-arrows span").getBoundingClientRect();
+      const arrowsOverlapCountdown = arrowRect.left < countdownRect.right && arrowRect.right > countdownRect.left && arrowRect.top < countdownRect.bottom && arrowRect.bottom > countdownRect.top;
+      return {
+        resetHours: hours,
+        expectedRatio: hours / 168,
+        actualRatio: (runnerRect.left - laneRect.left) / laneRect.width,
+        laneUsesFullBar: Math.abs(laneRect.left - barRect.left - 22.5) <= .5 && Math.abs(barRect.right - laneRect.right - 22.5) <= .5,
+        mascotCentered: Math.abs(((mascotRect.left + mascotRect.right) / 2) - runnerRect.left) <= .5,
+        mascotInsideBar: mascotRect.left >= barRect.left - .5 && mascotRect.right <= barRect.right + .5,
+        arrowsStartAtBar: Math.abs(arrowRect.left - barRect.left) <= .5,
+        arrowsStopBeforeMascot: hours === 0 ? arrowRect.width <= .5 : mascotRect.left - arrowRect.right >= 2.5 && mascotRect.left - arrowRect.right <= 4.5,
+        arrowsAvoidMascot: hours === 0 || arrowRect.right <= mascotRect.left - 2.5,
+        arrowsAvoidCountdown: !arrowsOverlapCountdown,
+        arrowTextCoversClip: hours === 0 || arrowTextRect.right >= arrowRect.right,
+        labelSide: document.querySelector("#reset-runner").dataset.labelSide,
+        countdownInsideBar: countdownRect.left >= barRect.left && countdownRect.right <= barRect.right
+      };
+    }, resetHours));
     await context.close();
   }
-  if (!positions.every((position, index) => index === 0 || position.runnerLeft < positions[index - 1].runnerLeft) || positions.at(-1).runnerLeft !== positions.at(-1).trackLeft) {
-    throw new Error(`Reset runner did not move continuously right-to-left: ${JSON.stringify(positions)}`);
+  if (!positions.every((position) => Math.abs(position.actualRatio - position.expectedRatio) <= .01 && position.laneUsesFullBar && position.mascotCentered && position.mascotInsideBar && position.arrowsStartAtBar && position.arrowsStopBeforeMascot && position.arrowsAvoidMascot && position.arrowsAvoidCountdown && position.arrowTextCoversClip && position.countdownInsideBar) || positions[0].labelSide !== "before" || positions[1].labelSide !== "after") {
+    throw new Error(`Reset runner did not use the full quota-bar time scale: ${JSON.stringify(positions)}`);
   }
 }
 

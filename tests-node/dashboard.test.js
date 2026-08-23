@@ -163,6 +163,7 @@ test("dashboard UI includes bilingual quota states, seven-task expansion, hostna
   assert.match(html, /progress-mascot\.gif/);
   assert.match(html, /id="reset-arrows"/);
   assert.match(html, /id="reset-runner"/);
+  assert.match(html, /class="reset-runner-lane"/);
   assert.match(html, /id="reset-countdown"/);
   assert.match(html, /id="quota-number"/);
   assert.match(html, /class="quota-symbol"/);
@@ -173,10 +174,18 @@ test("dashboard UI includes bilingual quota states, seven-task expansion, hostna
   assert.match(script, /Average daily allowance/);
   assert.match(script, /还有 \{value\} 小时重置/);
   assert.match(script, /remainingMs \/ durationMs/);
+  assert.match(script, /resetProgress >= 75/);
   assert.match(styles, /@keyframes resetArrowFlow/);
   assert.match(styles, /color: var\(--accent\)/);
-  assert.match(styles, /\.reset-runner\s*\{[\s\S]*?gap:\s*0;/);
-  assert.match(styles, /\.reset-countdown\s*\{[\s\S]*?margin-left:\s*-21px;/);
+  assert.match(styles, /\.reset-runner\s*\{[\s\S]*?width:\s*0;/);
+  assert.match(styles, /\.reset-runner-lane\s*\{[\s\S]*?inset:\s*0 var\(--runner-lane-inset\);/);
+  assert.match(styles, /--runner-arrow-gap:\s*4px;/);
+  assert.match(styles, /\.reset-arrows\s*\{[^}]*left:\s*calc\(0px - var\(--runner-lane-inset\)\);/);
+  assert.match(styles, /\.reset-arrows\s*\{[^}]*width:\s*max\(0px, calc\(var\(--runner-lane-inset\) \+ var\(--reset-progress\) - var\(--runner-mascot-half-width\) - var\(--runner-arrow-gap\)\)\);/);
+  assert.doesNotMatch(styles, /\.reset-arrows\s*\{[^}]*width:\s*100%;/);
+  assert.match(styles, /\.reset-countdown\s*\{[\s\S]*?left:\s*var\(--runner-mascot-half-width\);/);
+  assert.match(styles, /\.reset-countdown\s*\{[^}]*bottom:\s*3px;/);
+  assert.match(styles, /\.reset-runner\[data-label-side="before"\] \.reset-countdown\s*\{[^}]*bottom:\s*19px;/);
   assert.match(script, /codex-phone-language/);
   assert.match(html, /输入电脑端 AI 告诉你的 6 位配对码/);
   assert.match(script, /No code\? Ask your AI/);

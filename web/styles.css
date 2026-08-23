@@ -175,14 +175,22 @@ h2 { font-size: 25px; line-height: 1; letter-spacing: -.045em; }
 
 .bar-area {
   --reset-progress: 0%;
-  --runner-reserved-width: 132px;
+  --runner-mascot-width: 43px;
+  --runner-mascot-half-width: 21.5px;
+  --runner-arrow-gap: 4px;
+  --runner-lane-inset: 22.5px;
   position: relative;
   padding-top: 34px;
 }
 
 .reset-track {
   position: absolute;
-  inset: 0 var(--runner-reserved-width) 0 0;
+  inset: 0;
+}
+
+.reset-runner-lane {
+  position: absolute;
+  inset: 0 var(--runner-lane-inset);
 }
 
 .reset-runner {
@@ -190,15 +198,17 @@ h2 { font-size: 25px; line-height: 1; letter-spacing: -.045em; }
   z-index: 3;
   left: var(--reset-progress);
   bottom: 9px;
-  display: flex;
-  align-items: flex-end;
-  gap: 0;
+  width: 0;
+  height: 30px;
   white-space: nowrap;
   transition: left .55s cubic-bezier(.2, .8, .2, 1);
 }
 
 .progress-mascot {
-  width: auto;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: var(--runner-mascot-width);
   height: 30px;
   object-fit: contain;
   pointer-events: none;
@@ -207,8 +217,9 @@ h2 { font-size: 25px; line-height: 1; letter-spacing: -.045em; }
 }
 
 .reset-countdown {
-  margin-left: -21px;
-  padding-bottom: 3px;
+  position: absolute;
+  left: var(--runner-mascot-half-width);
+  bottom: 3px;
   color: var(--ink);
   font-size: clamp(9px, 2.55vw, 11px);
   font-weight: 650;
@@ -216,12 +227,18 @@ h2 { font-size: 25px; line-height: 1; letter-spacing: -.045em; }
   text-shadow: 0 0 12px rgba(var(--accent-rgb), .24);
 }
 
+.reset-runner[data-label-side="before"] .reset-countdown {
+  right: var(--runner-mascot-half-width);
+  left: auto;
+  bottom: 19px;
+}
+
 .reset-arrows {
   position: absolute;
   z-index: 2;
-  left: 0;
+  left: calc(0px - var(--runner-lane-inset));
   bottom: 12px;
-  width: var(--reset-progress);
+  width: max(0px, calc(var(--runner-lane-inset) + var(--reset-progress) - var(--runner-mascot-half-width) - var(--runner-arrow-gap)));
   overflow: hidden;
   color: var(--accent);
   font-size: 14px;
@@ -533,7 +550,6 @@ form button {
   .shell { padding-inline: 16px; }
   #dashboard { margin-top: 28px; }
   .quota-value { margin-top: 18px; }
-  .bar-area { --runner-reserved-width: 132px; }
   .reset-arrows { font-size: 13px; }
   .tasks-head { margin: 34px 2px 12px; }
   .quota-meta { gap: 7px; }
